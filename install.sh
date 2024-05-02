@@ -4,8 +4,17 @@
 CURRENT_DIR=$(pwd)
 
 VENV_ACTIVE=false
+unset ALLOW_SYSTEM_PYTHON
+
+# Process args
+for arg in "$@"; do
+    case "$arg" in
+        --allow-system-python) ALLOW_SYSTEM_PYTHON=true; break ;;
+    esac
+done
 
 echo -e "\e[34m[Allor]\e[0m: Searching for Python environments."
+
 
 if [ -d "../../venv" ]; then
     echo -e "\e[34m[Allor]\e[0m: Found venv Python environment."
@@ -26,10 +35,17 @@ if [ -d "../../venv" ]; then
       exit 1
     fi
 elif command -v python3 &> /dev/null; then
+   if [ -z ${ALLOW_SYSTEM_PYTHON+x} ]; then
+    # If use_system_python is not set, prompt the user
     printf "\e[34m[Allor]\e[0m: Only the system Python environment is detected. Should this be used for Allor dependencies? (y/N): "
     read answer
-
-    [[ $answer =~ ^[yY] ]] || echo -e "\e[31m[Allor]\e[0m: None of the Python environments were found." && exit 1
+    if [[ $answer =~ ^[yY] ]]; then
+        ALLOW_SYSTEM_PYTHON=true
+    else
+        echo -e "\e[31m[Allor]\e[0m: None of the Python environments were found."
+        exit 1
+    fi
+fi
 else
     echo -e "\e[31m[Allor]\e[0m: None of the Python environments were found."
     exit 1
